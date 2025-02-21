@@ -17,13 +17,14 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Space Engineers cache
-        uses: actions/cache@v3.2.5
-        with:
-          # A list of files, directories, and wildcard patterns to cache and restore
-          path: se\
-          # An explicit key for restoring and saving the cache
-          key: seds
+      # SE cache causes an error during installation verification?
+      #- name: Space Engineers cache
+      #  uses: actions/cache@v3.2.5
+      #  with:
+      #    # A list of files, directories, and wildcard patterns to cache and restore
+      #    path: se\
+      #    # An explicit key for restoring and saving the cache
+      #    key: seds
           
       - name: NuGet cache
         uses: actions/cache@v3.2.5
