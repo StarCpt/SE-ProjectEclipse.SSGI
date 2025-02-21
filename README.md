@@ -18,10 +18,11 @@ There should now be folder with a shortcut-looking icon called Bin64 in the root
 
 #### Installation using precompiled files:  
 1. Download ssgi-plugin.zip in the latest release
-2. Copy the files in the zip other than the ones in Shaders to SpaceEngineers/Bin64/Plugins/Local/SSGI
-3. Copy everything in the Shaders folder to SpaceEngineers/Content/Shaders/ProjectEclipse/
-4. Launch the game, search ProjectEclipse.SSGI in the plugin browser and enable it.
-8. Restart the game when prompted.
+2. Extract the zip using WinRAR or 7-zip so the files aren't blocked (otherwise you will have to unblock each file in file's properties)
+3. Copy the files in the extracted folder other than the ones in Shaders/ to SpaceEngineers/Bin64/Plugins/Local/SSGI
+4. Copy everything in the Shaders folder to SpaceEngineers/Content/Shaders/ProjectEclipse/
+5. Launch the game, search ProjectEclipse.SSGI in the plugin browser and enable it.
+6. Restart the game when prompted.
 
 #### Settings:
 - Max Ray March Steps: Leave at default value
