@@ -7,6 +7,7 @@ using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using System;
 using System.Runtime.InteropServices;
+using System.Threading.Tasks;
 using VRageMath;
 using Buffer = SharpDX.Direct3D11.Buffer;
 using Device = SharpDX.Direct3D11.Device;
@@ -392,16 +393,20 @@ namespace ProjectEclipse.SSGI
 
             DisposeShaders();
 
-            _csRestirInitial        = _shaderCompiler.CompileCompute(_device, "SSR/restir_initial.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
-            _csRestirSpatioTemporal = _shaderCompiler.CompileCompute(_device, "SSR/restir_resampling.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
-            _csRestirShading        = _shaderCompiler.CompileCompute(_device, "SSR/restir_shading.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
-            _csRestirComposite      = _shaderCompiler.CompileCompute(_device, "SSR/restir_composite.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
-            _psReference = _shaderCompiler.CompilePixel(_device, "SSR/ssr_reference.hlsl", "main", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
-            _psBlur      = _shaderCompiler.CompilePixel(_device, "SSR/blur.hlsl", "MipBlur");
+            Action[] compileActions =
+            {
+                () => _csRestirInitial        = _shaderCompiler.CompileCompute(_device, "SSR/restir_initial.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes)),
+                () => _csRestirSpatioTemporal = _shaderCompiler.CompileCompute(_device, "SSR/restir_resampling.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes)),
+                () => _csRestirShading        = _shaderCompiler.CompileCompute(_device, "SSR/restir_shading.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes)),
+                () => _csRestirComposite      = _shaderCompiler.CompileCompute(_device, "SSR/restir_composite.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes)),
+                () => _psReference = _shaderCompiler.CompilePixel(_device, "SSR/ssr_reference.hlsl", "main", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes)),
+                () => _psBlur      = _shaderCompiler.CompilePixel(_device, "SSR/blur.hlsl", "MipBlur"),
+                _hzbGenerator.ReloadShaders,
+                _diffuseDenoiser.ReloadShaders,
+                _specularDenoiser.ReloadShaders,
+            };
 
-            _hzbGenerator.ReloadShaders();
-            _diffuseDenoiser.ReloadShaders();
-            _specularDenoiser.ReloadShaders();
+            Parallel.ForEach(compileActions, action => action());
         }
 
         public void Dispose()
