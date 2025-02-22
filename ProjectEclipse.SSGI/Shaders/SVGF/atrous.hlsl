@@ -69,7 +69,7 @@ float4 main(const float4 position : SV_Position, const float2 uv : TEXCOORD0) : 
         return 0;
     }
     
-    float centerLinearDepth = ComputeLinearDepth(centerDepth) * InvViewDistance;
+    float centerLinearDepth = ComputeLinearDepth(centerDepth) /** InvViewDistance*/;
     float centerDepthDerivative = HistoryMomentsDepthDerivatives[pixelPos].w;
     float4 centerColorAndVariance = Source[pixelPos]; // w comp contains variance calculated in the temporal stage
     float centerLum = luminance(centerColorAndVariance.xyz);
@@ -77,7 +77,7 @@ float4 main(const float4 position : SV_Position, const float2 uv : TEXCOORD0) : 
     
     float centerVarianceFiltered = computeVarianceCenter(pixelPos);
     
-    const float varianceEpsilon = 1e-4;
+    const float varianceEpsilon = 1e-10; 
     const float phiColor = 10;
     const float phiNormal = 128;
     
@@ -97,11 +97,15 @@ float4 main(const float4 position : SV_Position, const float2 uv : TEXCOORD0) : 
             bool isValid = all(nPos >= 0 && nPos < ScreenSize);
             bool isCenter = xx == 0 && yy == 0;
             
-            if (isValid && !isCenter)
+            [branch]
+            if (isCenter)
+                continue;
+            
+            if (isValid)
             {
                 float kernelWeight = kernelWeights[xx + kernelRadius] * kernelWeights[yy + kernelRadius];
             
-                float nLinearDepth = ComputeLinearDepth(DepthBuffer[nPos]) * InvViewDistance;
+                float nLinearDepth = ComputeLinearDepth(DepthBuffer[nPos]) /** InvViewDistance*/;
                 float3 nNormal = LoadViewSpaceNormal(nPos);
                 float4 nColorAndVariance = Source[nPos];
                 float nLum = luminance(nColorAndVariance.xyz);

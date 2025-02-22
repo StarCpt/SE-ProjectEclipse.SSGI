@@ -46,7 +46,7 @@ float4 main(const float4 position : SV_Position, const float2 uv : TEXCOORD0) : 
     {
         const float centerLum = luminance(centerColorAndVariance.xyz);
         const float centerDepth = DepthBuffer[pixelPos];
-        const float centerLinearDepth = ComputeLinearDepth(centerDepth) * InvViewDistance;
+        const float centerLinearDepth = ComputeLinearDepth(centerDepth) /** InvViewDistance*/;
         
         if (!IsDepthForeground(centerDepth))
         {
@@ -85,7 +85,7 @@ float4 main(const float4 position : SV_Position, const float2 uv : TEXCOORD0) : 
                     float3 nColor = CurrentFrame[nPos].xyz;
                     float nLum = luminance(nColor);
                     float2 nMoments = Buffer1[nPos].yz;
-                    float nLinearDepth = ComputeLinearDepth(DepthBuffer[nPos]) * InvViewDistance;
+                    float nLinearDepth = ComputeLinearDepth(DepthBuffer[nPos]) /** InvViewDistance*/;
                     float3 nNormal = LoadViewSpaceNormal(nPos);
                     
                     float w = computeWeight(centerLinearDepth, nLinearDepth, phiDepth, centerNormal, nNormal, phiNormal, centerLum, nLum, phiLIllumination);

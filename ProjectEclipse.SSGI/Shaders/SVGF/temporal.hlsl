@@ -131,9 +131,8 @@ float4 main(const float4 position : SV_Position, const float2 uv : TEXCOORD0, ou
     const float prevLinearDepth = ComputeLinearDepth(PrevDepthBuffer[prevPixelPos]);
     const float depthDiff = abs(prevLinearDepth - reprojectedLinearDepth) / reprojectedLinearDepth;
     
-    const float viewDistInv = 1.0 / 15000.0; // temp, create variable in cbuffer
-    float linearDepth = ComputeLinearDepth(depth) * viewDistInv;
-    float depthDerivative = max(abs(ddx_fine(linearDepth)), abs(ddy_fine(linearDepth)));
+    float linearDepth = ComputeLinearDepth(depth) /** InvViewDistance*/;
+    float depthDerivative = max(abs(ddx(linearDepth)), abs(ddy(linearDepth)));
     
     const float3 currentColor = CurrentFrame[pixelPos].xyz;
     
