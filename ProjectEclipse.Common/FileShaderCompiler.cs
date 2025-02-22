@@ -69,7 +69,8 @@ namespace ProjectEclipse.Common
             _baseShaderPath = baseShaderPath;
         }
 
-        public PixelShader CompilePixel(Device device, string id, string entryPoint)
+        public PixelShader CompilePixel(Device device, string id, string entryPoint) => CompilePixel(device, id, entryPoint, Array.Empty<ShaderMacro>());
+        public PixelShader CompilePixel(Device device, string id, string entryPoint, params ShaderMacro[] defines)
         {
             string filePath = Path.Combine(_baseShaderPath, id);
             using (StreamReader sr = new StreamReader(filePath))
@@ -81,13 +82,14 @@ namespace ProjectEclipse.Common
                     "ps_5_0",
                     ShaderFlags.OptimizationLevel3,
                     EffectFlags.None,
-                    Array.Empty<ShaderMacro>(),
+                    defines,
                     new FileIncludeHandler(filePath));
                 return new PixelShader(device, compilation);
             }
         }
 
-        public VertexShader CompileVertex(Device device, string id, string entryPoint)
+        public VertexShader CompileVertex(Device device, string id, string entryPoint) => CompileVertex(device, id, entryPoint, Array.Empty<ShaderMacro>());
+        public VertexShader CompileVertex(Device device, string id, string entryPoint, params ShaderMacro[] defines)
         {
             string filePath = Path.Combine(_baseShaderPath, id);
             using (StreamReader sr = new StreamReader(filePath))
@@ -99,13 +101,14 @@ namespace ProjectEclipse.Common
                     "vs_5_0",
                     ShaderFlags.OptimizationLevel3,
                     EffectFlags.None,
-                    Array.Empty<ShaderMacro>(),
+                    defines,
                     new FileIncludeHandler(filePath));
                 return new VertexShader(device, compilation);
             }
         }
 
-        public ComputeShader CompileCompute(Device device, string id, string entryPoint)
+        public ComputeShader CompileCompute(Device device, string id, string entryPoint) => CompileCompute(device, id, entryPoint, Array.Empty<ShaderMacro>());
+        public ComputeShader CompileCompute(Device device, string id, string entryPoint, params ShaderMacro[] defines)
         {
             string filePath = Path.Combine(_baseShaderPath, id);
             using (StreamReader sr = new StreamReader(filePath))
@@ -117,7 +120,7 @@ namespace ProjectEclipse.Common
                     "cs_5_0",
                     ShaderFlags.OptimizationLevel3,
                     EffectFlags.None,
-                    Array.Empty<ShaderMacro>(),
+                    defines,
                     new FileIncludeHandler(filePath));
                 return new ComputeShader(device, compilation);
             }

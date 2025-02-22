@@ -8,6 +8,11 @@
 
 RestirReservoir LoadCandidateReservoir(uint2 pixelPos)
 {
+#if RT_RES == RT_HALF
+    pixelPos.x &= ~0x1;
+#elif RT_RES == RT_QUARTER
+    pixelPos.xy &= ~0x1;
+#endif
     return _LoadReservoir(CandidateReservoirs, pixelPos);
 }
 
@@ -180,25 +185,25 @@ float3 ReferenceSSR(const uint2 pixelPos, const float2 uv, SSRInput input, const
     return reflectedColor;
 }
 
-bool ValidateReservoir(const float2 uv, const SSRInput input, inout RestirReservoir reservoir)
-{
-    float2 uvHit;
-    float hitConfidence = TraceRayHiZ(uv, input, normalize(reservoir.LightPos - input.PositionView), uvHit);
-    
-    float oldHitDist = length(reservoir.LightPos - input.PositionView);
-    float newHitDist = length(ReconstructViewPosition(uvHit) - input.PositionView);
-    
-    if (hitConfidence == 0 || abs(newHitDist - oldHitDist) < (oldHitDist * 0.1))
-    {
-        reservoir.LightRadiance = LoadFrameColor(LinearSampler, uvHit);
-        return true;
-    }
-    else
-    {
-        reservoir = RestirReservoir::CreateEmpty();
-        return false;
-    }
-}
+//bool ValidateReservoir(const float2 uv, const SSRInput input, inout RestirReservoir reservoir)
+//{
+//    float2 uvHit;
+//    float hitConfidence = TraceRayHiZ(uv, input, normalize(reservoir.LightPos - input.PositionView), uvHit);
+//    
+//    float oldHitDist = length(reservoir.LightPos - input.PositionView);
+//    float newHitDist = length(ReconstructViewPosition(uvHit) - input.PositionView);
+//    
+//    if (hitConfidence == 0 || abs(newHitDist - oldHitDist) < (oldHitDist * 0.1))
+//    {
+//        reservoir.LightRadiance = LoadFrameColor(LinearSampler, uvHit);
+//        return true;
+//    }
+//    else
+//    {
+//        reservoir = RestirReservoir::CreateEmpty();
+//        return false;
+//    }
+//}
 
 [numthreads(NUM_THREADS_XY, NUM_THREADS_XY, 1)]
 void cs(const uint3 dispatchThreadId : SV_DispatchThreadID)

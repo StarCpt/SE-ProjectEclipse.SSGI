@@ -10,6 +10,13 @@ namespace ProjectEclipse.SSGI.Config
     {
         public struct ConfigData
         {
+            public enum RtRes
+            {
+                Full = 0,
+                Half = 1,
+                Quarter = 2,
+            }
+
             public bool Enabled { get; set; }
             public int MaxTraceIterations
             {
@@ -20,6 +27,11 @@ namespace ProjectEclipse.SSGI.Config
             {
                 get => _raysPerPixel;
                 set => _raysPerPixel = MathHelper.Clamp(value, 1, 32);
+            }
+            public RtRes TraceRes
+            {
+                get => _traceRes;
+                set => _traceRes = (RtRes)MathHelper.Clamp((int)value, 0, 2);
             }
             public bool EnableInputPrefiltering { get; set; }
             public bool UseGaussianPrefiltering { get; set; }
@@ -56,6 +68,7 @@ namespace ProjectEclipse.SSGI.Config
 
             private int _maxTraceIterations;
             private int _raysPerPixel;
+            private RtRes _traceRes;
             private float _indirectLightMulti;
             private float _svgf_DiffuseTemporalWeight;
             private float _svgf_SpecularTemporalWeight;
@@ -67,6 +80,7 @@ namespace ProjectEclipse.SSGI.Config
                 Enabled = true,
                 MaxTraceIterations = 80,
                 RaysPerPixel = 1,
+                TraceRes = RtRes.Full,
                 EnableInputPrefiltering = true,
                 UseGaussianPrefiltering = false,
                 IndirectLightMulti = 1.0f,
@@ -88,6 +102,7 @@ namespace ProjectEclipse.SSGI.Config
                     Enabled = Enabled,
                     MaxTraceIterations = MaxTraceIterations,
                     RaysPerPixel = RaysPerPixel,
+                    TraceRes = TraceRes,
                     EnableInputPrefiltering = EnableInputPrefiltering,
                     UseGaussianPrefiltering = UseGaussianPrefiltering,
                     IndirectLightMulti = IndirectLightMulti,

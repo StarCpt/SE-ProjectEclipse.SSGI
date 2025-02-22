@@ -2,6 +2,7 @@
 using ProjectEclipse.Common;
 using ProjectEclipse.Common.Interfaces;
 using ProjectEclipse.SSGI.Config;
+using SharpDX.Direct3D;
 using SharpDX.Direct3D11;
 using SharpDX.DXGI;
 using System;
@@ -95,6 +96,7 @@ namespace ProjectEclipse.SSGI
         private Matrix _prevInvProjMatrix = Matrix.Identity;
         private Matrix _prevInvViewProjMatrix = Matrix.Identity;
 
+        private SSGIConfig.ConfigData.RtRes _prevRtMode;
         private bool _disposed = false;
 
         private readonly Device _device;
@@ -148,7 +150,7 @@ namespace ProjectEclipse.SSGI
                 CameraDelta = envMatrices.CameraPosition - _prevCameraPos,
 
                 MaxTraceIterations = (uint)Math.Max(1, _config.Data.MaxTraceIterations),
-                RaysPerPixel = (uint)Math.Max(1, _config.Data.RaysPerPixel),
+                RaysPerPixel = (uint)Math.Max(1, _config.Data.TraceRes == SSGIConfig.ConfigData.RtRes.Full ? _config.Data.RaysPerPixel : 1),
                 IndirectLightMulti = Math.Max(0, _config.Data.IndirectLightMulti),
 
                 ViewMatrix = Matrix.Transpose(envMatrices.ViewAt0),
@@ -260,6 +262,12 @@ namespace ProjectEclipse.SSGI
         /// <param name="renderTarget"></param>
         public void Draw(DeviceContext rc, ITexture2DSrv frameBuffer, ITexture2DSrv depthBuffer, ITexture2DSrv gbuffer0, ITexture2DSrv gbuffer1, ITexture2DSrv gbuffer2, ITexture2DSrvRtvUav renderTarget)
         {
+            if (_prevRtMode != _config.Data.TraceRes)
+            {
+                _prevRtMode = _config.Data.TraceRes;
+                ReloadShaders();
+            }
+
             var envMatrices = MyRender11Accessor.GetEnvironmentMatrices();
             int frameIndex = MyRender11Accessor.GetGameplayFrameCounter();
 
@@ -380,13 +388,15 @@ namespace ProjectEclipse.SSGI
 
         public void ReloadShaders()
         {
+            _prevRtMode = _config.Data.TraceRes;
+
             DisposeShaders();
 
-            _csRestirInitial        = _shaderCompiler.CompileCompute(_device, "SSR/restir_initial.hlsl", "cs");
-            _csRestirSpatioTemporal = _shaderCompiler.CompileCompute(_device, "SSR/restir_resampling.hlsl", "cs");
-            _csRestirShading        = _shaderCompiler.CompileCompute(_device, "SSR/restir_shading.hlsl", "cs");
-            _csRestirComposite      = _shaderCompiler.CompileCompute(_device, "SSR/restir_composite.hlsl", "cs");
-            _psReference = _shaderCompiler.CompilePixel(_device, "SSR/ssr_reference.hlsl", "main");
+            _csRestirInitial        = _shaderCompiler.CompileCompute(_device, "SSR/restir_initial.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
+            _csRestirSpatioTemporal = _shaderCompiler.CompileCompute(_device, "SSR/restir_resampling.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
+            _csRestirShading        = _shaderCompiler.CompileCompute(_device, "SSR/restir_shading.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
+            _csRestirComposite      = _shaderCompiler.CompileCompute(_device, "SSR/restir_composite.hlsl", "cs", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
+            _psReference = _shaderCompiler.CompilePixel(_device, "SSR/ssr_reference.hlsl", "main", new ShaderMacro("RT_RES", (int)_config.Data.TraceRes));
             _psBlur      = _shaderCompiler.CompilePixel(_device, "SSR/blur.hlsl", "MipBlur");
 
             _hzbGenerator.ReloadShaders();

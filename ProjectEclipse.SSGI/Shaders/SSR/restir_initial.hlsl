@@ -30,8 +30,18 @@ bool UpdateReservoir(inout RestirReservoir reservoir, float w, float3 lightPos, 
 [numthreads(NUM_THREADS_XY, NUM_THREADS_XY, 1)]
 void cs(const uint3 dispatchThreadId : SV_DispatchThreadID)
 {
+#if RT_RES == RT_HALF
+    const uint2 pixelPos = dispatchThreadId.xy * uint2(2, 1);
+    if (pixelPos.x > ScreenSize.x) // skip odd x pixels
+        return;
+#elif RT_RES == RT_QUARTER
+    const uint2 pixelPos = dispatchThreadId.xy * uint2(2, 2);
+    if (any(pixelPos > ScreenSize)) // skip odd pixels
+        return;
+#else
     const uint2 pixelPos = dispatchThreadId.xy;
-    const uint2 pixelIndex = pixelPos.y * ScreenSize.x + pixelPos.x;
+#endif
+    const uint pixelIndex = pixelPos.y * ScreenSize.x + pixelPos.x;
     const float2 uv = (pixelPos + 0.5) / float2(ScreenSize);
     uint randState = pixelIndex * RandomSeed;
     SSRInput input = LoadSSRInput(pixelPos);
@@ -101,7 +111,7 @@ void cs(const uint3 dispatchThreadId : SV_DispatchThreadID)
             // contribution is 0 if ray reflect dir is below the surface
             // try to generate a valid reflect ray up to 5 times
             float n_dot_l = 0;
-            for (uint j = 0; j < 5 && n_dot_l <= 0; j++)
+            for (uint j = 0; j < 3 && n_dot_l <= 0; j++)
             {
                 float2 qRand2 = qrng.Next();
                 reflectDir = SampleGGXVNDF(-input.RayDirView, input.NormalView, 1 - input.Gloss, qRand2);

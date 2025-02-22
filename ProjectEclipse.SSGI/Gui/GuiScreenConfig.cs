@@ -10,7 +10,7 @@ namespace ProjectEclipse.SSGI.Gui
 {
     public class GuiScreenConfig : MyGuiScreenBase
     {
-        private MyGuiControlCheckbox _cEnablePlugin, _cEnableDenoiser, _cEnablePrefiltering, _cEnableRestir;
+        private MyGuiControlCheckbox _cEnablePlugin, _cEnableDenoiser, _cEnablePrefiltering, _cEnableRestir, _cTraceFull, _cTraceHalf, _cTraceQuarter;
         private MyGuiControlSlider _sMaxTraceIterations, _sRaysPerPixel, _sIndirectLightMulti, _sDiffuseTemporalWeight, _sSpecularTemporalWeight, _sDiffuseAtrousIterations, _sSpecularAtrousIterations;
 
         private readonly SSGIConfig _config;
@@ -65,7 +65,16 @@ namespace ProjectEclipse.SSGI.Gui
             row++;
 
             grid.AddLabel(0, row, "Rays Per Pixel", HorizontalAlignment.Left);
-            _sRaysPerPixel = grid.AddIntegerSlider(1, row, true, _config.Data.RaysPerPixel, 1, 32, SSGIConfig.ConfigData.Default.RaysPerPixel, true, HorizontalAlignment.Left);
+            _sRaysPerPixel = grid.AddIntegerSlider(1, row, _config.Data.TraceRes == SSGIConfig.ConfigData.RtRes.Full, _config.Data.RaysPerPixel, 1, 32, SSGIConfig.ConfigData.Default.RaysPerPixel, true, HorizontalAlignment.Left);
+            row++;
+
+            grid.AddLabel(0, row, "Lower Quality RT (Faster)", HorizontalAlignment.Left);
+            _cTraceQuarter = grid.AddCheckbox(1, row, true, _config.Data.TraceRes == SSGIConfig.ConfigData.RtRes.Quarter, "0.25 rays per pixel.\nDoesn't work when ReSTIR is off", HorizontalAlignment.Left);
+            _cTraceHalf = grid.AddCheckbox(1, row, true, _config.Data.TraceRes == SSGIConfig.ConfigData.RtRes.Half, "0.5 rays per pixel.\nDoesn't work when ReSTIR is off", HorizontalAlignment.Left);
+            _cTraceFull = grid.AddCheckbox(1, row, true, _config.Data.TraceRes == SSGIConfig.ConfigData.RtRes.Full, "Use RPP slider value", HorizontalAlignment.Left);
+            var labelTraceQuarter = grid.AddLabel(1, row, "Quarter", HorizontalAlignment.Left);
+            var labelTraceHalf = grid.AddLabel(1, row, "Half", HorizontalAlignment.Left);
+            var labelTraceFull = grid.AddLabel(1, row, "Full", HorizontalAlignment.Left);
             row++;
 
             grid.AddLabel(0, row, "Prefilter Input Frame", HorizontalAlignment.Left);
@@ -103,6 +112,37 @@ namespace ProjectEclipse.SSGI.Gui
             this.Size = new Vector2(0.6f, (rowHeight * row) + 0.2f);
 
             grid.AddControlsToScreen(this, new Vector2(0f, -0.01f), false);
+
+            labelTraceQuarter.OriginAlign = MyGuiDrawAlignEnum.HORISONTAL_RIGHT_AND_VERTICAL_CENTER;
+            labelTraceHalf.OriginAlign    = MyGuiDrawAlignEnum.HORISONTAL_RIGHT_AND_VERTICAL_CENTER;
+            labelTraceFull.OriginAlign    = MyGuiDrawAlignEnum.HORISONTAL_RIGHT_AND_VERTICAL_CENTER;
+            
+            labelTraceQuarter.PositionX += columnWidth / 3.7f * 0 + 0.055f - 0.005f;
+            labelTraceHalf.PositionX    += columnWidth / 3.7f * 1 + 0.055f - 0.005f;
+            labelTraceFull.PositionX    += columnWidth / 3.7f * 2 + 0.055f - 0.005f;
+            _cTraceQuarter.PositionX    += columnWidth / 3.7f * 0 + 0.055f;
+            _cTraceHalf.PositionX       += columnWidth / 3.7f * 1 + 0.055f;
+            _cTraceFull.PositionX       += columnWidth / 3.7f * 2 + 0.055f;
+
+            _cTraceQuarter.IsCheckedChanged += OnTraceResCheckboxChanged;
+            _cTraceHalf.IsCheckedChanged += OnTraceResCheckboxChanged;
+            _cTraceFull.IsCheckedChanged += OnTraceResCheckboxChanged;
+
+            void OnTraceResCheckboxChanged(MyGuiControlCheckbox checkbox)
+            {
+                if (checkbox.IsChecked)
+                {
+                    _cTraceQuarter.IsChecked = checkbox == _cTraceQuarter;
+                    _cTraceHalf.IsChecked = checkbox == _cTraceHalf;
+                    _cTraceFull.IsChecked = checkbox == _cTraceFull;
+
+                    _sRaysPerPixel.Enabled = checkbox == _cTraceFull;
+                }
+                else if (!_cTraceQuarter.IsChecked && !_cTraceHalf.IsChecked && !_cTraceFull.IsChecked)
+                {
+                    checkbox.IsChecked = true;
+                }
+            }
 
             AddCaption("SSGI Config");
             AddFooterButtons(new FooterButtonDesc("Save", OnSaveButtonClick), new FooterButtonDesc("Default", OnDefaultButtonClick));
@@ -145,6 +185,11 @@ namespace ProjectEclipse.SSGI.Gui
             _cEnablePlugin.IsChecked = SSGIConfig.ConfigData.Default.Enabled;
             _sMaxTraceIterations.Value = SSGIConfig.ConfigData.Default.MaxTraceIterations;
             _sRaysPerPixel.Value = SSGIConfig.ConfigData.Default.RaysPerPixel;
+
+            _cTraceQuarter.IsChecked = SSGIConfig.ConfigData.Default.TraceRes == SSGIConfig.ConfigData.RtRes.Quarter;
+            _cTraceHalf.IsChecked = SSGIConfig.ConfigData.Default.TraceRes == SSGIConfig.ConfigData.RtRes.Half;
+            _cTraceFull.IsChecked = SSGIConfig.ConfigData.Default.TraceRes == SSGIConfig.ConfigData.RtRes.Full;
+
             _cEnablePrefiltering.IsChecked = SSGIConfig.ConfigData.Default.EnableInputPrefiltering;
             _sIndirectLightMulti.Value = SSGIConfig.ConfigData.Default.IndirectLightMulti;
             _cEnableRestir.IsChecked = SSGIConfig.ConfigData.Default.Restir_Enabled;
@@ -160,6 +205,11 @@ namespace ProjectEclipse.SSGI.Gui
             _config.Data.Enabled = _cEnablePlugin.IsChecked;
             _config.Data.MaxTraceIterations = (int)_sMaxTraceIterations.Value;
             _config.Data.RaysPerPixel = (int)_sRaysPerPixel.Value;
+
+            if (_cTraceQuarter.IsChecked) _config.Data.TraceRes = SSGIConfig.ConfigData.RtRes.Quarter;
+            if (_cTraceHalf.IsChecked) _config.Data.TraceRes = SSGIConfig.ConfigData.RtRes.Half;
+            if (_cTraceFull.IsChecked) _config.Data.TraceRes = SSGIConfig.ConfigData.RtRes.Full;
+
             _config.Data.EnableInputPrefiltering = _cEnablePrefiltering.IsChecked;
             _config.Data.IndirectLightMulti = _sIndirectLightMulti.Value;
             _config.Data.Restir_Enabled = _cEnableRestir.IsChecked;

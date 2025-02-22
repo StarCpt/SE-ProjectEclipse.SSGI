@@ -266,6 +266,12 @@ RestirReservoir SpatialResampling(const int2 pixelPos, const float2 uv, const SS
         int2 neighborPixel = RandomPixelInDisk(isPrevValid ? prevPixelPos : pixelPos, reuseRadius, randState);
         //neighborPixel = clamp(neighborPixel, 0, int2(frame_.Screen.resolution - 1));
         
+#if RT_RES == RT_HALF
+        neighborPixel.x &= ~0x1;
+#elif RT_RES == RT_QUARTER
+        neighborPixel.xy &= ~0x1;
+#endif
+        
         if (any(neighborPixel < 0 || neighborPixel >= ScreenSize))
             continue;
         
@@ -359,7 +365,13 @@ void cs(const uint3 dispatchThreadId : SV_DispatchThreadID)
     
     const bool isMirror = input.Gloss > MIRROR_REFLECTION_THRESHOLD;
     
+#if RT_RES == RT_HALF
+    const RestirReservoir canonicalReservoir = LoadCandidateReservoir(pixelPos & uint2(~0x1, ~0x0));
+#elif RT_RES == RT_QUARTER
+    const RestirReservoir canonicalReservoir = LoadCandidateReservoir(pixelPos & ~0x1);
+#else
     const RestirReservoir canonicalReservoir = LoadCandidateReservoir(pixelPos);
+#endif
     
     [branch]
     if (!input.IsForeground || input.Gloss < REFLECT_GLOSS_THRESHOLD || isMirror || input.Gloss > 0.6)

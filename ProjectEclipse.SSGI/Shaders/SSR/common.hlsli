@@ -12,6 +12,14 @@
 #define NUM_THREADS_XY 8 // only used in compute shaders
 #define BRDF_BIAS 0
 
+#define RT_FULL 0
+#define RT_HALF 1
+#define RT_QUARTER 2
+
+#ifndef RT_RES // for development only, use shader define for release
+#define RT_RES RT_FULL
+#endif
+
 struct SSRInput
 {
     float3 Color;
