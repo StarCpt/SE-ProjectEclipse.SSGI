@@ -17,7 +17,7 @@ void cs_trace(const uint3 dispatchThreadId : SV_DispatchThreadID)
     const uint2 pixelPos = dispatchThreadId.xy;
     const uint pixelIndex = pixelPos.y * GetScreenSize().x + pixelPos.x;
     const float2 uv = (dispatchThreadId.xy + 0.5) / GetScreenSize();
-    uint randSeed = asuint(pixelIndex * frame_.randomSeed);
+    uint randSeed = pixelIndex * RandomSeed;
     
     SSRInput input = LoadSSRInput(pixelPos);
     
@@ -36,7 +36,7 @@ void cs_trace(const uint3 dispatchThreadId : SV_DispatchThreadID)
 float2 ComputePrevUV(float2 currentUV)
 {
     float3 worldPos = TexToWorld(currentUV, HZB.SampleLevel(PointSampler, currentUV, 0));
-    worldPos += frame_.Environment.cameraPositionDelta;
+    worldPos += CameraDelta;
     float4 prevClipPos = mul(float4(worldPos, 1), PrevViewProjMatrix);
     return ClipToTex(prevClipPos.xy / prevClipPos.w);
 }
@@ -60,7 +60,7 @@ void cs_resolve(const uint3 dispatchThreadId : SV_DispatchThreadID)
     const uint2 pixelPos = dispatchThreadId.xy;
     const uint pixelIndex = pixelPos.y * GetScreenSize().x + pixelPos.x;
     const float2 uv = (dispatchThreadId.xy + 0.5) / GetScreenSize();
-    uint randSeed = asuint(pixelIndex * frame_.randomSeed);
+    uint randSeed = pixelIndex * RandomSeed;
     
     //outputTex[pixelPos] = float4(FrameBuffer.SampleLevel(LinearSampler, uv, 4).xyz, 1);
     //return;
@@ -152,8 +152,8 @@ float2 ComputeMotionWithRespectToHitDepth(float2 currentUv, float hitDepthRaw/*,
     float3 clipPos = float3(TexToClip(currentUv), hitDepthRaw);
     float3 worldPos = ClipToWorld(clipPos);
     
-    float4 prevClipPos = mul(float4(worldPos + frame_.Environment.cameraPositionDelta, 1), PrevViewProjMatrix);
-    float4 currClipPos = mul(float4(worldPos, 1), frame_.Environment.view_projection_matrix); // isn't this just clipPos from above?
+    float4 prevClipPos = mul(float4(worldPos + CameraDelta, 1), PrevViewProjMatrix);
+    float4 currClipPos = mul(float4(worldPos, 1), ViewProjMatrix); // isn't this just clipPos from above?
     
     float2 prevTexPos = ClipToTex(prevClipPos.xy / prevClipPos.w);
     float2 currTexPos = ClipToTex(currClipPos.xy / currClipPos.w);

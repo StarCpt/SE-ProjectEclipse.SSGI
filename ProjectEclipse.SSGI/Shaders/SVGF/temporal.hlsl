@@ -147,7 +147,7 @@ float4 main(const float4 position : SV_Position, const float2 uv : TEXCOORD0, ou
         return IsDepthForeground(depth) ? float4(currentColor, 0) : 0;
     }
     
-    const float reflectionDepth = ReflectionDepths[pixelPos];
+    //const float reflectionDepth = ReflectionDepths[pixelPos];
     //if (reflectionDepth != 0)
     //{
     //    float2 parallaxCorrectPrevUv = uv - ComputeMotionWithRespectToHitDepth(uv, reflectionDepth);

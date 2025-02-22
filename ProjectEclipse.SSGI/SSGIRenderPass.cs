@@ -70,6 +70,7 @@ namespace ProjectEclipse.SSGI
         private ComputeShader _csRestirSpatioTemporal;
         private ComputeShader _csRestirShading;
         private ComputeShader _csRestirComposite;
+        private PixelShader _psReference;
         private PixelShader _psBlur;
 
         // resources
@@ -277,16 +278,35 @@ namespace ProjectEclipse.SSGI
 
             UpdateCB(rc, envMatrices, (uint)frameIndex);
 
-            rc.ComputeShader.SetSamplers(1, _samplerStates.Point, _samplerStates.Linear);
-            rc.ComputeShader.SetConstantBuffer(1, _cbuffer.Buffer);
-            rc.ComputeShader.SetShaderResources(0, depthBuffer.Srv, gbuffer0.Srv, gbuffer1.Srv, gbuffer2.Srv, _hzbGenerator.HzbSrv.Srv, inputFrame.Srv);
-            rc.ComputeShader.SetUnorderedAccessViews(0, diffuseIrradiance.Uav, specularIrradiance.Uav, _prevReservoirs.Uav, _candidateReservoirs.Uav, _temporalReservoirs.Uav, _spatialReservoirs.Uav, rayExtendedDepthBuffer.Uav);
+            if (_config.Data.Restir_Enabled)
+            {
+                rc.ComputeShader.SetSamplers(1, _samplerStates.Point, _samplerStates.Linear);
+                rc.ComputeShader.SetConstantBuffer(1, _cbuffer.Buffer);
+                rc.ComputeShader.SetShaderResources(0, depthBuffer.Srv, gbuffer0.Srv, gbuffer1.Srv, gbuffer2.Srv, _hzbGenerator.HzbSrv.Srv, inputFrame.Srv);
+                rc.ComputeShader.SetUnorderedAccessViews(0, diffuseIrradiance.Uav, specularIrradiance.Uav, _prevReservoirs.Uav, _candidateReservoirs.Uav, _temporalReservoirs.Uav, _spatialReservoirs.Uav, rayExtendedDepthBuffer.Uav);
 
-            InitialPass();
-            ResamplingPass();
-            ShadingPass();
+                InitialPass();
+                ResamplingPass();
+                ShadingPass();
 
-            rc.ComputeShader.SetUnorderedAccessViews(0, null, null, null, null, null, null, null);
+                rc.ComputeShader.SetUnorderedAccessViews(0, null, null, null, null, null, null, null);
+            }
+            else
+            {
+                rc.PixelShader.SetSamplers(1, _samplerStates.Point, _samplerStates.Linear);
+                rc.PixelShader.SetConstantBuffer(1, _cbuffer.Buffer);
+                rc.PixelShader.SetShaderResources(0, depthBuffer.Srv, gbuffer0.Srv, gbuffer1.Srv, gbuffer2.Srv, _hzbGenerator.HzbSrv.Srv, inputFrame.Srv);
+                rc.OutputMerger.SetTargets(diffuseIrradiance.Rtv, specularIrradiance.Rtv, rayExtendedDepthBuffer.Rtv);
+
+                rc.PixelShader.Set(_psReference);
+                _renderUtils.DrawFullscreenPass(rc, _screenSize);
+                rc.OutputMerger.SetTargets();
+
+                // for composition pass
+                rc.ComputeShader.SetSamplers(1, _samplerStates.Point, _samplerStates.Linear);
+                rc.ComputeShader.SetConstantBuffer(1, _cbuffer.Buffer);
+                rc.ComputeShader.SetShaderResources(0, depthBuffer.Srv, gbuffer0.Srv, gbuffer1.Srv, gbuffer2.Srv, _hzbGenerator.HzbSrv.Srv, inputFrame.Srv);
+            }
 
             if (_config.Data.Svgf_Enabled)
             {
@@ -347,12 +367,14 @@ namespace ProjectEclipse.SSGI
             _csRestirSpatioTemporal?.Dispose();
             _csRestirShading?.Dispose();
             _csRestirComposite?.Dispose();
+            _psReference?.Dispose();
             _psBlur?.Dispose();
 
             _csRestirInitial = null;
             _csRestirSpatioTemporal = null;
             _csRestirShading = null;
             _csRestirComposite = null;
+            _psReference = null;
             _psBlur = null;
         }
 
@@ -364,7 +386,8 @@ namespace ProjectEclipse.SSGI
             _csRestirSpatioTemporal = _shaderCompiler.CompileCompute(_device, "SSR/restir_resampling.hlsl", "cs");
             _csRestirShading        = _shaderCompiler.CompileCompute(_device, "SSR/restir_shading.hlsl", "cs");
             _csRestirComposite      = _shaderCompiler.CompileCompute(_device, "SSR/restir_composite.hlsl", "cs");
-            _psBlur = _shaderCompiler.CompilePixel(_device, "SSR/blur.hlsl", "MipBlur");
+            _psReference = _shaderCompiler.CompilePixel(_device, "SSR/ssr_reference.hlsl", "main");
+            _psBlur      = _shaderCompiler.CompilePixel(_device, "SSR/blur.hlsl", "MipBlur");
 
             _hzbGenerator.ReloadShaders();
             _diffuseDenoiser.ReloadShaders();

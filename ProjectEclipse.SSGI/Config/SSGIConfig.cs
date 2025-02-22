@@ -28,7 +28,7 @@ namespace ProjectEclipse.SSGI.Config
                 get => _indirectLightMulti;
                 set => _indirectLightMulti = MathHelper.Clamp(value, 0, 10);
             }
-            //public bool Restir_Enabled { get; set; }
+            public bool Restir_Enabled { get; set; }
             //public int Restir_Temporal_MaxHistory { get; set; }
             //public int Restir_Spatial_ReuseCount { get; set; }
             //public float Restir_Spatial_ReuseRadiusMultiplier { get; set; }
@@ -70,7 +70,7 @@ namespace ProjectEclipse.SSGI.Config
                 EnableInputPrefiltering = true,
                 UseGaussianPrefiltering = false,
                 IndirectLightMulti = 1.0f,
-                //Restir_Enabled = true,
+                Restir_Enabled = true,
                 //Restir_Temporal_MaxHistory = 20,
                 //Restir_Spatial_ReuseCount = 4,
                 //Restir_Spatial_ReuseRadiusMultiplier = 1.0f,
@@ -91,6 +91,7 @@ namespace ProjectEclipse.SSGI.Config
                     EnableInputPrefiltering = EnableInputPrefiltering,
                     UseGaussianPrefiltering = UseGaussianPrefiltering,
                     IndirectLightMulti = IndirectLightMulti,
+                    Restir_Enabled = Restir_Enabled,
                     Svgf_Enabled = Svgf_Enabled,
                     Svgf_DiffuseTemporalWeight = Svgf_DiffuseTemporalWeight,
                     Svgf_SpecularTemporalWeight = Svgf_SpecularTemporalWeight,

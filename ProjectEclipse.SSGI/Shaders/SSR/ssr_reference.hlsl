@@ -4,23 +4,22 @@
 #include "trace_hiz.hlsli"
 #include "../sampling_ggx.hlsli"
 #include "../sampler_sobol.hlsli"
+#include "../lighting.hlsli"
 
-float3 main(float4 position : SV_Position, float2 uv : TEXCOORD0) : SV_Target0
+void main(float4 position : SV_Position, float2 uv : TEXCOORD0, out float3 diffuseIrradiance : SV_Target0, out float3 specularIrradiance : SV_Target1, out float rayExtendedDepth : SV_Target2)
 {
     const uint2 pixelPos = uint2(position.xy);
     const uint pixelIndex = pixelPos.y * GetScreenSize().x + pixelPos.x;
-    float3 pixelColor = FrameBuffer[pixelPos];
-    SSRInput input = LoadSSRInput(pixelPos);
+    const SSRInput input = LoadSSRInput(pixelPos);
     
-#if REFLECTION_ONLY
-    pixelColor = 0;
-    input.Color = 1;
-#endif
+    diffuseIrradiance = 0;
+    specularIrradiance = 0;
+    rayExtendedDepth = 0; // TODO: not implemented
     
     [branch]
     if (!input.IsForeground || input.Gloss < REFLECT_GLOSS_THRESHOLD)
     {
-        return pixelColor;
+        return;
     }
     
     const bool isMirror = input.Gloss > MIRROR_REFLECTION_THRESHOLD;
@@ -28,7 +27,7 @@ float3 main(float4 position : SV_Position, float2 uv : TEXCOORD0) : SV_Target0
     [branch]
     if (isMirror) // fast 1rpp path for mirror reflections
     {
-        input.Gloss = 0.95;
+        //input.Gloss = 0.95;
         
         float3 reflectDir = reflect(input.RayDirView, input.NormalView);
         
@@ -41,17 +40,22 @@ float3 main(float4 position : SV_Position, float2 uv : TEXCOORD0) : SV_Target0
             const float3 hitColor = FrameBuffer.SampleLevel(LinearSampler, uvHit, 0).xyz;
             const float3 brdfSpecular = BrdfSpecular(1 - input.Gloss, input.Metalness, input.Color, -input.RayDirView, reflectDir, input.NormalView);
             const float pdf = PdfGGXVNDF(-input.RayDirView, reflectDir, input.NormalView, 1 - input.Gloss);
-            pixelColor += hitColor * hitConfidence * brdfSpecular / pdf * IndirectLightMulti;
+            specularIrradiance += hitColor * hitConfidence * brdfSpecular / pdf;
         }
     }
     else
     {
         uint randState = asuint(InterleavedGradientNoise(pixelPos)) * RandomSeed;
-        static const uint raysPerPixel = 4;
-        static const float contributionPerRay = 1.0 / raysPerPixel;
+        const uint raysPerPixel = RaysPerPixel;
+        const float contributionPerRay = 1.0 / raysPerPixel;
         
         SobolOwenSampler qrng;
         qrng.Init(FrameIndex * raysPerPixel, uint2(PCG_Rand(randState), PCG_Rand(randState)));
+        
+        // for filtered sampling
+        const float roughness = 1.0 - input.Gloss;
+        const float n_dot_v = saturate(dot(input.NormalView, -input.RayDirView));
+        const float coneTangent = lerp(0, roughness, n_dot_v * sqrt(roughness));
         
         for (uint i = 0; i < raysPerPixel; i++)
         {
@@ -61,7 +65,7 @@ float3 main(float4 position : SV_Position, float2 uv : TEXCOORD0) : SV_Target0
             // contribution is 0 if ray reflect dir is below the surface
             // try to generate a valid reflect ray up to 5 times
             float n_dot_l = 0;
-            for (uint j = 0; j < 5 && n_dot_l <= 0; j++)
+            for (uint j = 0; j < 3 && n_dot_l <= 0; j++)
             {
                 float2 qRand2 = qrng.Next();
                 reflectDir = SampleGGXVNDF(-input.RayDirView, input.NormalView, 1 - input.Gloss, qRand2);
@@ -79,13 +83,17 @@ float3 main(float4 position : SV_Position, float2 uv : TEXCOORD0) : SV_Target0
             
             if (hitConfidence != 0)
             {
-                const float3 hitColor = FrameBuffer.SampleLevel(LinearSampler, uvHit, 0).xyz;
-                float3 brdf = Brdf(1 - input.Gloss, input.Metalness, input.Color, -input.RayDirView, reflectDir, input.NormalView);
-                brdf /= pdf;
-                pixelColor += (hitColor * hitConfidence) * brdf * contributionPerRay * IndirectLightMulti;
+                const float intersectionCircleRadius = coneTangent * length(uvHit - uv);
+                const float mip = max(log2(intersectionCircleRadius * max(GetScreenSize().x, GetScreenSize().y)), 0);
+                
+                const float3 hitColor = LoadFrameColor(LinearSampler, uvHit, mip).xyz;
+                float3 brdfDiffuse, brdfSpecular;
+                Brdf(1 - input.Gloss, input.Metalness, input.Color, -input.RayDirView, reflectDir, input.NormalView, brdfDiffuse, brdfSpecular);
+                diffuseIrradiance += hitColor * hitConfidence * brdfDiffuse / pdf * contributionPerRay;
+                specularIrradiance += hitColor * hitConfidence * brdfSpecular / pdf * contributionPerRay;
             }
         }
     }
     
-    return pixelColor;
+    DemodulateRadiance(input.Color, input.NormalView, input.Metalness, 1 - input.Gloss, -input.RayDirView, diffuseIrradiance, specularIrradiance);
 }

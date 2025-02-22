@@ -214,7 +214,8 @@ void cs(const uint3 dispatchThreadId : SV_DispatchThreadID)
     if (!input.IsForeground || input.Gloss < REFLECT_GLOSS_THRESHOLD)
     {
         ReflectionDepths[pixelPos] = 0;
-        RestirOutputTexture[pixelPos] = float4(pixelColor, 1);
+        RestirOutputTexture[pixelPos] = 0;
+        RestirOutputTexture2[pixelPos] = 0;
         StorePrevReservoir(pixelPos, RestirReservoir::CreateEmpty());
         return;
     }

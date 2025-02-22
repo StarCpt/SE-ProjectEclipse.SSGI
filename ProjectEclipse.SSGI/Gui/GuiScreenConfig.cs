@@ -10,7 +10,7 @@ namespace ProjectEclipse.SSGI.Gui
 {
     public class GuiScreenConfig : MyGuiScreenBase
     {
-        private MyGuiControlCheckbox _cEnablePlugin, _cEnableDenoiser, _cEnablePrefiltering;
+        private MyGuiControlCheckbox _cEnablePlugin, _cEnableDenoiser, _cEnablePrefiltering, _cEnableRestir;
         private MyGuiControlSlider _sMaxTraceIterations, _sRaysPerPixel, _sIndirectLightMulti, _sDiffuseTemporalWeight, _sSpecularTemporalWeight, _sDiffuseAtrousIterations, _sSpecularAtrousIterations;
 
         private readonly SSGIConfig _config;
@@ -42,8 +42,6 @@ namespace ProjectEclipse.SSGI.Gui
         public override void RecreateControls(bool constructor)
         {
             base.RecreateControls(constructor);
-
-            AddCaption("SSGI Config");
 
             const float columnWidth = 0.27f;
             const float rowHeight = 0.05f;
@@ -78,6 +76,10 @@ namespace ProjectEclipse.SSGI.Gui
             _sIndirectLightMulti = grid.AddFloatSlider(1, row, true, _config.Data.IndirectLightMulti, 0, 10, SSGIConfig.ConfigData.Default.IndirectLightMulti, true, HorizontalAlignment.Left);
             row++;
 
+            grid.AddLabel(0, row, "Use ReSTIR GI", HorizontalAlignment.Left);
+            _cEnableRestir = grid.AddCheckbox(1, row, true, _config.Data.Restir_Enabled, null, HorizontalAlignment.Left);
+            row++;
+
             grid.AddLabel(0, row, "Use Denoiser", HorizontalAlignment.Left);
             _cEnableDenoiser = grid.AddCheckbox(1, row, true, _config.Data.Svgf_Enabled, null, HorizontalAlignment.Left);
             row++;
@@ -102,6 +104,7 @@ namespace ProjectEclipse.SSGI.Gui
 
             grid.AddControlsToScreen(this, new Vector2(0f, -0.01f), false);
 
+            AddCaption("SSGI Config");
             AddFooterButtons(new FooterButtonDesc("Save", OnSaveButtonClick), new FooterButtonDesc("Default", OnDefaultButtonClick));
         }
 
@@ -144,6 +147,7 @@ namespace ProjectEclipse.SSGI.Gui
             _sRaysPerPixel.Value = SSGIConfig.ConfigData.Default.RaysPerPixel;
             _cEnablePrefiltering.IsChecked = SSGIConfig.ConfigData.Default.EnableInputPrefiltering;
             _sIndirectLightMulti.Value = SSGIConfig.ConfigData.Default.IndirectLightMulti;
+            _cEnableRestir.IsChecked = SSGIConfig.ConfigData.Default.Restir_Enabled;
             _cEnableDenoiser.IsChecked = SSGIConfig.ConfigData.Default.Svgf_Enabled;
             _sDiffuseTemporalWeight.Value = SSGIConfig.ConfigData.Default.Svgf_DiffuseTemporalWeight;
             _sSpecularTemporalWeight.Value = SSGIConfig.ConfigData.Default.Svgf_SpecularTemporalWeight;
@@ -158,6 +162,7 @@ namespace ProjectEclipse.SSGI.Gui
             _config.Data.RaysPerPixel = (int)_sRaysPerPixel.Value;
             _config.Data.EnableInputPrefiltering = _cEnablePrefiltering.IsChecked;
             _config.Data.IndirectLightMulti = _sIndirectLightMulti.Value;
+            _config.Data.Restir_Enabled = _cEnableRestir.IsChecked;
             _config.Data.Svgf_Enabled = _cEnableDenoiser.IsChecked;
             _config.Data.Svgf_DiffuseTemporalWeight = _sDiffuseTemporalWeight.Value;
             _config.Data.Svgf_SpecularTemporalWeight = _sSpecularTemporalWeight.Value;
