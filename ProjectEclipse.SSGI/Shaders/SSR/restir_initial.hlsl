@@ -93,7 +93,9 @@ void cs(const uint3 dispatchThreadId : SV_DispatchThreadID)
     }
     else
     {
-        const uint raysPerPixel = RaysPerPixel;
+        const float2 prevUv = GetPrevUV(uv, input.Depth);
+        const bool disoccluded = any(saturate(prevUv) != prevUv);
+        const uint raysPerPixel = disoccluded ? (RaysPerPixel * 2) : RaysPerPixel;
         
         SobolOwenSampler qrng;
         qrng.Init(FrameIndex * raysPerPixel, uint2(PCG_Rand(randState), PCG_Rand(randState)));

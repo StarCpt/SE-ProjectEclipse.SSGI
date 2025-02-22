@@ -46,7 +46,11 @@ void main(float4 position : SV_Position, float2 uv : TEXCOORD0, out float3 diffu
     else
     {
         uint randState = asuint(InterleavedGradientNoise(pixelPos)) * RandomSeed;
-        const uint raysPerPixel = RaysPerPixel;
+        
+        const float2 prevUv = GetPrevUV(uv, input.Depth);
+        const bool disoccluded = any(saturate(prevUv) != prevUv);
+        const uint raysPerPixel = disoccluded ? (RaysPerPixel * 2) : RaysPerPixel;
+        
         const float contributionPerRay = 1.0 / raysPerPixel;
         
         SobolOwenSampler qrng;

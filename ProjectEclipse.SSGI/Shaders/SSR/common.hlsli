@@ -384,4 +384,12 @@ inline float2 GetScreenSize()
     return float2(ScreenSize);
 }
 
+float2 GetPrevUV(float2 currentUV, float currentDepth)
+{
+    float3 worldPos = TexToWorld(currentUV, currentDepth);
+    worldPos += CameraDelta;
+    float4 prevClipPos = mul(float4(worldPos, 1), PrevViewProjMatrix);
+    return ClipToTex(prevClipPos.xy / prevClipPos.w);
+}
+
 #endif

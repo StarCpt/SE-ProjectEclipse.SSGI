@@ -118,14 +118,6 @@ bool updateReservoir(float weight, RestirReservoir srcReservoir, inout RestirRes
     return isUpdate;
 }
 
-float2 GetPrevUV(float2 currentUV, float currentDepth)
-{
-    float3 worldPos = TexToWorld(currentUV, currentDepth);
-    worldPos += CameraDelta;
-    float4 prevClipPos = mul(float4(worldPos, 1), PrevViewProjMatrix);
-    return ClipToTex(prevClipPos.xy / prevClipPos.w);
-}
-
 //float3 ReprojectViewPos(float3 prevViewPos)
 //{
 //    float3 prevWorldPos = mul(PrevViewMatrix, float4(prevViewPos, 1)).xyz;
