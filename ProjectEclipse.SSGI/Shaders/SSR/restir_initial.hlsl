@@ -93,7 +93,7 @@ void cs(const uint3 dispatchThreadId : SV_DispatchThreadID)
     }
     else
     {
-        const float2 prevUv = GetPrevUV(uv, input.Depth);
+        const float2 prevUv = GetPrevUV(uv, input.RawDepth);
         const bool disoccluded = any(saturate(prevUv) != prevUv);
         const uint raysPerPixel = disoccluded ? (RaysPerPixel * 2) : RaysPerPixel;
         

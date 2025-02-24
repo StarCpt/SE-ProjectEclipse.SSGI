@@ -145,7 +145,7 @@ void ReprojectPrevReservoir(inout RestirReservoir reservoir)
 
 RestirReservoir TemporalResampling(const int2 pixelPos, const float2 uv, const SSRInput input, const RestirReservoir canonicalReservoir, out bool isPrevValid, inout uint randState)
 {
-    const float2 prevUV = GetPrevUV(uv, input.Depth);
+    const float2 prevUV = GetPrevUV(uv, input.RawDepth);
     const int2 prevPixelPos = (prevUV * GetScreenSize());
     
     isPrevValid = all(saturate(prevUV) == prevUV);
@@ -223,10 +223,10 @@ RestirReservoir TemporalResampling(const int2 pixelPos, const float2 uv, const S
 
 RestirReservoir SpatialResampling(const int2 pixelPos, const float2 uv, const SSRInput input, const RestirReservoir canonicalReservoir, bool isPrevValid, inout uint randState)
 {
-    const float2 prevUV = GetPrevUV(uv, input.Depth);
+    const float2 prevUV = GetPrevUV(uv, input.RawDepth);
     const int2 prevPixelPos = (prevUV * GetScreenSize());
     
-    const float linearDepth = compute_depth(input.Depth);
+    const float linearDepth = compute_depth(input.RawDepth);
     RestirReservoir spatialReservoir = LoadPrevReservoir(prevPixelPos);
     
     spatialReservoir.M = min(spatialReservoir.M, canonicalReservoir.M * MAX_HISTORY);

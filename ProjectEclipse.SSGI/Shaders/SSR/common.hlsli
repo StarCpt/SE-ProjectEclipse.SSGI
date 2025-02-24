@@ -24,7 +24,7 @@ struct SSRInput
 {
     float3 Color;
     float3 NormalView;
-    float Depth;
+    float RawDepth;
     float Metalness;
     float Gloss;
     
@@ -156,12 +156,12 @@ cbuffer constants : register(b1)
     float4x4 PrevInvViewProjMatrix;
 };
 
-bool IsDepthForeground(float depth)
+bool IsDepthForeground(float rawDepth)
 {
 #if INVERTED_DEPTH
-    return depth > 0;
+    return rawDepth > 0;
 #else
-    return depth < 1;
+    return rawDepth < 1;
 #endif
 }
 
@@ -215,9 +215,9 @@ float2 TexToClip(float2 texPos)
     return texPos;
 }
 
-float3 TexToView(float2 texPos, float depth)
+float3 TexToView(float2 texPos, float rawDepth)
 {
-    float4 clipPos = float4(TexToClip(texPos.xy), depth, 1);
+    float4 clipPos = float4(TexToClip(texPos.xy), rawDepth, 1);
     float4 viewPos = mul(clipPos, InvProjMatrix);
     return viewPos.xyz / viewPos.w;
 }
@@ -228,9 +228,9 @@ float3 ClipToWorld(float3 clipPos)
     return worldPos.xyz / worldPos.w;
 }
 
-float3 TexToWorld(float2 texPos, float depth)
+float3 TexToWorld(float2 texPos, float rawDepth)
 {
-    float4 clipPos = float4(TexToClip(texPos.xy), depth, 1);
+    float4 clipPos = float4(TexToClip(texPos.xy), rawDepth, 1);
     float4 worldPos = mul(clipPos, InvViewProjMatrix);
     return worldPos.xyz / worldPos.w;
 }
@@ -264,7 +264,7 @@ SSRInput LoadSSRInput(uint2 pixelPos)
     float3 viewNormal = normalize(unpack_normals2(gbuffer1.xy));
     input.NormalView = all(!isnan(viewNormal)) ? viewNormal : float3(0, 0, 1);
     
-    input.Depth = hw_depth;
+    input.RawDepth = hw_depth;
     input.Metalness = gbuffer2.x;
     input.Gloss = gbuffer2.y;
     
@@ -384,9 +384,9 @@ inline float2 GetScreenSize()
     return float2(ScreenSize);
 }
 
-float2 GetPrevUV(float2 currentUV, float currentDepth)
+float2 GetPrevUV(float2 currentUV, float currentRawDepth)
 {
-    float3 worldPos = TexToWorld(currentUV, currentDepth);
+    float3 worldPos = TexToWorld(currentUV, currentRawDepth);
     worldPos += CameraDelta;
     float4 prevClipPos = mul(float4(worldPos, 1), PrevViewProjMatrix);
     return ClipToTex(prevClipPos.xy / prevClipPos.w);
