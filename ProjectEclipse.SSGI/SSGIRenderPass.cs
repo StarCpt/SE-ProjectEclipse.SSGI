@@ -270,7 +270,7 @@ namespace ProjectEclipse.SSGI
             }
 
             var envMatrices = MyRender11Accessor.GetEnvironmentMatrices();
-            int frameIndex = MyRender11Accessor.GetGameplayFrameCounter();
+            long frameIndex = MySceneAccessor.GetFrameCounter();
 
             ITexture2DSrv inputFrame = frameBuffer;
             if (_config.Data.EnableInputPrefiltering)

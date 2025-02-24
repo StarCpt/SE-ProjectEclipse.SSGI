@@ -41,7 +41,7 @@ namespace ProjectEclipse.Backend.Reflection
         private static readonly Type _MyEnvironmentMatrices = AccessTools.TypeByName("VRageRender.MyEnvironmentMatrices");
         private static readonly Func<object> _MyRender11_Environment_Getter = _MyRender11.Field("Environment").CreateGenericStaticGetter<object>();
         private static readonly Func<object, object> _MyEnvironment_Matrices_Getter = _MyEnvironment.Field("Matrices").CreateGenericGetter<object, object>();
-        private static readonly Func<int> _MyRender11_GameplayFrameCounter_Getter = _MyRender11.PropertyGetter("GameplayFrameCounter").CreateGenericStaticFunc<int>();
+        //private static readonly Func<int> _MyRender11_GameplayFrameCounter_Getter = _MyRender11.PropertyGetter("GameplayFrameCounter").CreateGenericStaticFunc<int>();
         private static readonly Func<Vector2I> _MyRender11_ViewportResolution_Getter = _MyRender11.PropertyGetter("ViewportResolution").CreateGenericStaticFunc<Vector2I>();
         private static readonly Func<object> _MyRender11_RC_Getter = _MyRender11.PropertyGetter("RC").CreateGenericStaticFunc<object>();
         private static readonly Func<Device1> _MyRender11_DeviceInstance_Getter = _MyRender11.PropertyGetter("DeviceInstance").CreateGenericStaticFunc<Device1>();
@@ -53,7 +53,7 @@ namespace ProjectEclipse.Backend.Reflection
             return Unsafe.As<MyEnvironmentMatrices>(myEnvironmentMatricesInstance);
         }
 
-        public static int GetGameplayFrameCounter() => _MyRender11_GameplayFrameCounter_Getter.Invoke();
+        //public static int GetGameplayFrameCounter() => _MyRender11_GameplayFrameCounter_Getter.Invoke();
         public static Vector2I GetViewportResolution() => _MyRender11_ViewportResolution_Getter.Invoke();
         public static MyRenderContextWrapper GetRC() => new MyRenderContextWrapper(_MyRender11_RC_Getter.Invoke());
         public static Device1 GetDeviceInstance() => _MyRender11_DeviceInstance_Getter.Invoke();
